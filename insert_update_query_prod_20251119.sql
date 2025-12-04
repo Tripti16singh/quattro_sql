@@ -623,9 +623,9 @@ WHERE dest.map_sow_id IS NULL
 drop table if exists #temp
 select * into #temp from stg.client_director_mapping
 
-update #temp set sow_code = null where sow_code in ('', ' ','  ', 'ï¿½', 'ï¿½ï¿½')
-update #temp set sow_description = null where sow_description in ('', ' ','  ', 'ï¿½', 'ï¿½ï¿½')
-update #temp set sub_service = null where sub_service in ('', ' ','  ', 'ï¿½', 'ï¿½ï¿½')
+update #temp set sow_code = null where sow_code in ('', ' ','  ', ' ', '  ')
+update #temp set sow_description = null where sow_description in ('', ' ','  ', ' ', '  ')
+update #temp set sub_service = null where sub_service in ('', ' ','  ', ' ', '  ')
 
 CREATE TABLE prod.map_client_director (
     cd_mapping_id INT IDENTITY(1,1) PRIMARY KEY
@@ -698,9 +698,9 @@ where dest.cd_mapping_id IS NULL
 drop table if exists #temp2
 select * into #temp2 from stg.project_manager_mapping
 
-update #temp2 set sow_code = null where sow_code in ('', ' ','  ', 'ï¿½', 'ï¿½ï¿½')
-update #temp2 set sow_description = null where sow_description in ('', ' ','  ', 'ï¿½', 'ï¿½ï¿½')
-update #temp2 set sub_service = null where sub_service in ('', ' ','  ', 'ï¿½', 'ï¿½ï¿½')
+update #temp2 set sow_code = null where sow_code in ('', ' ','  ', ' ', '  ')
+update #temp2 set sow_description = null where sow_description in ('', ' ','  ', ' ', '  ')
+update #temp2 set sub_service = null where sub_service in ('', ' ','  ', ' ', '  ')
 
 CREATE TABLE prod.map_project_manager (
     pm_mapping_id INT IDENTITY(1,1) PRIMARY KEY
@@ -1625,49 +1625,3 @@ select c.client_id, v.vertical_id, s.last_billing_month, s.fixed_revenue_loss_mo
 from [stg].[hist_attrition] s
 left join prod.dim_client c on c.consolidatedbp_code = s.client_code and c.consolidatedbp_name = s.client_name
 left join prod.vertical_category_mapping v on v.vertical_category = s.vertical_category
-
----- ---- added a new_deals _tables which was not present before to check the status of the version control.
-CREATE TABLE dev.fact_newdeals (
-    new_deal_id int IDENTITY(1,1) PRIMARY KEY,
-    deal_id bigint,  
-    client_id  INT FOREIGN KEY REFERENCES [dev].[dim_client](client_id), 
-    --company_name NVARCHAR(255),
-    deal_name VARCHAR(255) ,  
-    bu_mapping_id int FOREIGN KEY REFERENCES [dev].[map_business_unit](bu_mapping_id),
-    deal_owner VARCHAR(255),   
-    qbss_services VARCHAR(255), 
-    qbss_industry VARCHAR(255),  
-    annual_contract_value DECIMAL(18, 2), 
-    potential_acv_for_import DECIMAL(18, 2),  
-    pipeline VARCHAR(255),  
-    frequency_id int FOREIGN KEY REFERENCES [dev].[map_frequency](frequency_id),
-    type_of_deal varchar(100),
-    agreement_number varchar(100), 
-    sow_id NVARCHAR(255) , 
-    close_date DATE,  
-    amount DECIMAL(18, 2),
-    month varchar (100),
-    created_by VARCHAR(100) NOT NULL,
-	created_on DATETIME NOT NULL ,
-	updated_by VARCHAR(100),
-	updated_on DATETIME
-) ;
-
-
-INSERT INTO dev.fact_newdeals (
-  deal_id, client_id, deal_name, bu_mapping_id, deal_owner, qbss_services, qbss_industry,
-  annual_contract_value, potential_acv_for_import, pipeline, frequency_id, type_of_deal,
-  agreement_number, sow_id, close_date, amount, [month], created_by, created_on
-)
-SELECT
-  s.deal_id, c.client_id, s.deal_name, mb.bu_mapping_id, s.deal_owner, s.qbss_service, s.qbss_industry,
-  TRY_CONVERT(decimal(18,2), s.annual_contract_value), TRY_CONVERT(decimal(18,2), s.potential_acv_for_import),
-  s.pipeline, f.frequency_id, s.type_of_deal, s.agreement_number, TRY_CONVERT(int, s.sow_id),
-  TRY_CONVERT(date, s.close_date), TRY_CONVERT(decimal(18,2), s.amount),
-  LEFT(s.[month], 3),  -- keep as text: 'Jan','Feb',...
-  'shashank', GETDATE()
-FROM stg.fact_newdeals s
-LEFT JOIN dev.dim_client        c  ON c.consolidatedbp_code = s.bp_code AND c.consolidatedbp_name = s.company_name
-LEFT JOIN dev.map_business_unit mb ON mb.qbss_service_business_unit = s.qbss_servicing_business_unit
-LEFT JOIN dev.map_frequency     f  ON f.frequency = s.frequency;
---select * from dev.fact_newdeals
